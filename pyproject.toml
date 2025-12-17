@@ -1,0 +1,80 @@
+[project]
+name = "SFPP_Playground"
+version = "0.1.0"
+description = "Playground for experimenting with SPECFEM++ computational kernels"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+keywords = ["cpp", "c++", "compression", "development-tools"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+dependencies = [
+    "clang-format>=18.0.0",
+    "cmake>=3.27.0",
+    "ninja>=1.11.0",
+    "pre-commit>=3.5.0",
+    "clang-tidy>=18.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "clang-format>=18.0.0",
+    "cmake>=3.27.0",
+    "ninja>=1.11.0",
+    "pre-commit>=3.5.0",
+    "clang-tidy>=18.0.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+    "breathe>=4.35.0",
+    "sphinx-rtd-theme>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/KCompressedViews"
+Documentation = "https://yourusername.github.io/KCompressedViews"
+Repository = "https://github.com/yourusername/KCompressedViews.git"
+Issues = "https://github.com/yourusername/KCompressedViews/issues"
+Changelog = "https://github.com/yourusername/KCompressedViews/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
+dev-dependencies = [
+    "clang-format>=18.0.0",
+    "cmake>=3.27.0",
+    "ninja>=1.11.0",
+    "pre-commit>=3.5.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "YTT", "S", "B", "A", "C4", "T10", "ISC", "ICN", "PIE", "PT", "Q", "RSE", "RET", "SIM", "TID", "ARG", "PLE", "PLW", "RUF"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
