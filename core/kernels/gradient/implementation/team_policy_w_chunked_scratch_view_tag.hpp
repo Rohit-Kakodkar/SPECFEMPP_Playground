@@ -3,11 +3,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-struct TeamPolicyWChunkedScratchVTag {
-    static std::string name() {
-        return "TeamPolicyWChunkedScratchVTag";
-    }
-};
+struct TeamPolicyWChunkedScratchVTag {};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
 class Gradient<TeamPolicyWChunkedScratchVTag, FieldView, Quadrature, JacobianMatrixType>
@@ -20,6 +16,10 @@ public:
     Gradient(const TeamPolicyWChunkedScratchVTag /*unused*/, const FieldView& field,
              const Quadrature& lprime, const JacobianMatrixType& J)
         : Base(field, lprime, J) {
+    }
+
+    static std::string name() {
+        return "TeamPolicyWChunkedScratchVTag";
     }
 
     using Base::Base;
@@ -50,51 +50,52 @@ public:
                 ScratchSpaceType field_scratch(team.team_scratch(0), local_chunk_size, this->ngll_,
                                                this->ngll_, this->ncomponents_);
                 Kokkos::parallel_for(
-                    Kokkos::TeamThreadRange(team, local_chunk_size * this->nz_ * this->nx_),
-                    [&](const size_t idx) {
-                        const size_t local_e = idx % local_chunk_size;
-                        const size_t rem = idx / local_chunk_size;
-                        const size_t iz = rem % this->nz_;
-                        const size_t ix = rem / this->nz_;
+                    Kokkos::TeamThreadRange(team, this->nz_ * this->nx_), [&](const size_t idx) {
+                        const size_t iz = idx % this->nz_;
+                        const size_t ix = idx / this->nz_;
 
-                        for (size_t c = 0; c < this->ncomponents_; ++c) {
-                            field_scratch(local_e, iz, ix, c) =
-                                this->field_(start_e + local_e, iz, ix, c);
-                        }
+                        Kokkos::parallel_for(Kokkos::ThreadVectorRange(team, local_chunk_size),
+                                             [&](const size_t local_e) {
+                                                 for (size_t c = 0; c < this->ncomponents_; ++c) {
+                                                     field_scratch(local_e, iz, ix, c) =
+                                                         this->field_(start_e + local_e, iz, ix, c);
+                                                 }
+                                             });
                     });
 
                 team.team_barrier();
                 Kokkos::parallel_for(
-                    Kokkos::TeamThreadRange(team, local_chunk_size * this->nz_ * this->nx_),
-                    [&](const size_t idx) {
-                        const size_t local_e = idx % local_chunk_size;
-                        const size_t rem = idx / local_chunk_size;
-                        const size_t iz = rem % this->nz_;
-                        const size_t ix = rem / this->nz_;
+                    Kokkos::TeamThreadRange(team, this->nz_ * this->nx_), [&](const size_t idx) {
+                        const size_t iz = idx % this->nz_;
+                        const size_t ix = idx / this->nz_;
 
-                        T du_dxi[this->ncomponents_] = {static_cast<T>(0)};
-                        T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};
-                        for (size_t k = 0; k < this->ngll_; ++k) {
-                            for (size_t c = 0; c < this->ncomponents_; ++c) {
-                                du_dxi[c] +=
-                                    this->lprime_.xi(ix, k) * field_scratch(local_e, iz, k, c);
-                            }
-                        }
-                        for (size_t k = 0; k < this->ngll_; ++k) {
-                            for (size_t c = 0; c < this->ncomponents_; ++c) {
-                                du_dgamma[c] +=
-                                    this->lprime_.gamma(iz, k) * field_scratch(local_e, k, ix, c);
-                            }
-                        }
+                        Kokkos::parallel_for(
+                            Kokkos::ThreadVectorRange(team, local_chunk_size),
+                            [&](const size_t local_e) {
+                                T du_dxi[this->ncomponents_] = {static_cast<T>(0)};
+                                T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};
+                                for (size_t k = 0; k < this->ngll_; ++k) {
+                                    for (size_t c = 0; c < this->ncomponents_; ++c) {
+                                        du_dxi[c] += this->lprime_.xi(ix, k) *
+                                                     field_scratch(local_e, iz, k, c);
+                                    }
+                                }
+                                for (size_t k = 0; k < this->ngll_; ++k) {
+                                    for (size_t c = 0; c < this->ncomponents_; ++c) {
+                                        du_dgamma[c] += this->lprime_.gamma(iz, k) *
+                                                        field_scratch(local_e, k, ix, c);
+                                    }
+                                }
 
-                        for (size_t c = 0; c < this->ncomponents_; ++c) {
-                            this->gradient_(start_e + local_e, iz, ix, c, 0) =
-                                this->J_(start_e + local_e, iz, ix, 0, 0) * du_dxi[c] +
-                                this->J_(start_e + local_e, iz, ix, 0, 1) * du_dgamma[c];
-                            this->gradient_(start_e + local_e, iz, ix, c, 1) =
-                                this->J_(start_e + local_e, iz, ix, 1, 0) * du_dxi[c] +
-                                this->J_(start_e + local_e, iz, ix, 1, 1) * du_dgamma[c];
-                        }
+                                for (size_t c = 0; c < this->ncomponents_; ++c) {
+                                    this->gradient_(start_e + local_e, iz, ix, c, 0) =
+                                        this->J_(start_e + local_e, iz, ix, 0, 0) * du_dxi[c] +
+                                        this->J_(start_e + local_e, iz, ix, 0, 1) * du_dgamma[c];
+                                    this->gradient_(start_e + local_e, iz, ix, c, 1) =
+                                        this->J_(start_e + local_e, iz, ix, 1, 0) * du_dxi[c] +
+                                        this->J_(start_e + local_e, iz, ix, 1, 1) * du_dgamma[c];
+                                }
+                            });
                     });
             });
         return this->gradient_;

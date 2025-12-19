@@ -3,11 +3,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-struct TeamPolicyTag {
-    static std::string name() {
-        return "TeamPolicyTag";
-    }
-};
+struct TeamPolicyTag {};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
 class Gradient<TeamPolicyTag, FieldView, Quadrature, JacobianMatrixType>
@@ -20,6 +16,10 @@ public:
     Gradient(const TeamPolicyTag /*unused*/, const FieldView& field, const Quadrature& lprime,
              const JacobianMatrixType& J)
         : Base(field, lprime, J) {
+    }
+
+    static std::string name() {
+        return "TeamPolicyTag";
     }
 
     using Base::Base;

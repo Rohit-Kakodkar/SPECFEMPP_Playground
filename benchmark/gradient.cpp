@@ -5,25 +5,21 @@
 
 using namespace sfpp_playground;
 
-template <typename ParallelizationStrategy, typename FieldType, typename QuadratureType,
-          typename JacobianType>
-void warmup(const ParallelizationStrategy /*unused*/, const FieldType& field,
-            const QuadratureType& lprime, const JacobianType& J) {
+template <typename GradientType>
+void warmup(const GradientType& gradient) {
     constexpr size_t n_warmup_iterations = 10;
     for (size_t i = 0; i < n_warmup_iterations; ++i) {
-        auto gradient = Gradient(ParallelizationStrategy{}, field, lprime, J)();
+        auto grad = gradient();
     }
 }
 
-template <typename ParallelizationStrategy, typename FieldType, typename QuadratureType,
-          typename JacobianType>
-void benchmark(const ParallelizationStrategy /*unused*/, const FieldType& field,
-               const QuadratureType& lprime, const JacobianType& J) {
+template <typename GradientType>
+void benchmark(const GradientType& gradient) {
     auto start = std::chrono::high_resolution_clock::now();
-    auto gradient = Gradient(ParallelizationStrategy{}, field, lprime, J)();
+    auto grad = gradient();
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Strategy: " << std::setw(30) << std::left << ParallelizationStrategy::name()
+    std::cout << "Strategy: " << std::setw(30) << std::left << GradientType::name()
               << " | Time: " << std::fixed << std::setprecision(6) << elapsed.count() << " seconds"
               << std::endl;
 }
@@ -48,19 +44,25 @@ int main(int argc, char** argv) {
         JacobianMatrix2D<JacobianMatrixRegularInitializer2D> J{
             JacobianMatrixRegularInitializer2D{n_elements, ngll, ngll}};
 
-        // Compute gradient using different strategies
-        warmup(SerialTag{}, field, lprime, J);
-        warmup(MDRangeTag{}, field, lprime, J);
-        warmup(TeamPolicyTag{}, field, lprime, J);
-        warmup(TeamPolicyWScratchVTag{}, field, lprime, J);
-        warmup(TeamPolicyWChunkedScratchVTag{}, field, lprime, J);
+        const auto serial = Gradient(SerialTag{}, field, lprime, J);
+        const auto md_range = Gradient(MDRangeTag{}, field, lprime, J);
+        const auto team_policy = Gradient(TeamPolicyTag{}, field, lprime, J);
+        const auto team_policy_scratch = Gradient(TeamPolicyWScratchVTag{}, field, lprime, J);
+        const auto team_policy_chunked_scratch =
+            Gradient(TeamPolicyWChunkedScratchVTag{}, field, lprime, J);
 
+        // Compute gradient using different strategies
+        warmup(serial);
+        warmup(md_range);
+        warmup(team_policy);
+        warmup(team_policy_scratch);
+        warmup(team_policy_chunked_scratch);
         // Benchmarking code can be added here
-        benchmark(SerialTag{}, field, lprime, J);
-        benchmark(MDRangeTag{}, field, lprime, J);
-        benchmark(TeamPolicyTag{}, field, lprime, J);
-        benchmark(TeamPolicyWScratchVTag{}, field, lprime, J);
-        benchmark(TeamPolicyWChunkedScratchVTag{}, field, lprime, J);
+        benchmark(serial);
+        benchmark(md_range);
+        benchmark(team_policy);
+        benchmark(team_policy_scratch);
+        benchmark(team_policy_chunked_scratch);
     }
     Kokkos::finalize();
     return 0;
