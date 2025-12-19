@@ -14,6 +14,7 @@ public:
     }
 
     using memory_space = FieldView::memory_space;
+    using execution_space = typename FieldView::execution_space;
     using layout = FieldView::array_layout;
     using T = typename FieldView::value_type;
     using ReturnType = Kokkos::View<T*****, layout, memory_space>;

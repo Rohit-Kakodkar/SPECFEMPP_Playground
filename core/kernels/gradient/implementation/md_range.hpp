@@ -3,7 +3,11 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-class MDRangeTag {};
+struct MDRangeTag {
+    static std::string name() {
+        return "MDRangeTag";
+    }
+};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
 class Gradient<MDRangeTag, FieldView, Quadrature, JacobianMatrixType>

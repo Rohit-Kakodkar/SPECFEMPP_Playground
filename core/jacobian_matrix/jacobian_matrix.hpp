@@ -4,10 +4,11 @@
 
 namespace sfpp_playground {
 
-template <typename Initializer>
-class JacobianMatrix2D : public Kokkos::View<float*****, Kokkos::DefaultExecutionSpace> {
+template <typename Initializer, typename Layout = Kokkos::DefaultExecutionSpace::array_layout,
+          typename ExecutionSpace = Kokkos::DefaultExecutionSpace>
+class JacobianMatrix2D : public Kokkos::View<float*****, Layout, ExecutionSpace> {
 public:
-    using ViewType = Kokkos::View<float*****, Kokkos::DefaultExecutionSpace>;
+    using ViewType = Kokkos::View<float*****, Layout, ExecutionSpace>;
     JacobianMatrix2D(const Initializer init) {
         init.initialize(static_cast<ViewType&>(*this));
 

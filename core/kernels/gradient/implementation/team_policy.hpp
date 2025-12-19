@@ -3,7 +3,11 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-class TeamPolicyTag {};
+struct TeamPolicyTag {
+    static std::string name() {
+        return "TeamPolicyTag";
+    }
+};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
 class Gradient<TeamPolicyTag, FieldView, Quadrature, JacobianMatrixType>
@@ -31,8 +35,8 @@ public:
 
                 Kokkos::parallel_for(
                     Kokkos::TeamThreadRange(team, this->nx_ * this->nz_), [&](const size_t idx) {
-                        const size_t iz = idx / this->nx_;
-                        const size_t ix = idx % this->nx_;
+                        const size_t iz = idx % this->nz_;
+                        const size_t ix = idx / this->nz_;
 
                         T du_dxi[this->ncomponents_] = {static_cast<T>(0)};
                         T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};

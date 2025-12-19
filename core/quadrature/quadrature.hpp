@@ -4,7 +4,8 @@
 
 namespace sfpp_playground {
 
-template <typename Initializer>
+template <typename Initializer, typename Layout = Kokkos::DefaultExecutionSpace::array_layout,
+          typename ExecutionSpace = Kokkos::DefaultExecutionSpace>
 class Quadrature {
 public:
     Quadrature(const Initializer init) {
@@ -13,7 +14,7 @@ public:
         Kokkos::fence();
     }
     Quadrature() = default;
-    using ViewType = Kokkos::View<float**, Kokkos::DefaultExecutionSpace>;
+    using ViewType = Kokkos::View<float**, Layout, ExecutionSpace>;
 
     KOKKOS_INLINE_FUNCTION
     float& xi(const int i, const int j) const {

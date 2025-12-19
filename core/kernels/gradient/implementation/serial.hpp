@@ -3,7 +3,11 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-class SerialTag {};
+struct SerialTag {
+    static std::string name() {
+        return "SerialTag";
+    }
+};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
 class Gradient<SerialTag, FieldView, Quadrature, JacobianMatrixType>

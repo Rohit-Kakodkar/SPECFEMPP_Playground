@@ -3,7 +3,11 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-class TeamPolicyWChunkedScratchVTag {};
+struct TeamPolicyWChunkedScratchVTag {
+    static std::string name() {
+        return "TeamPolicyWChunkedScratchVTag";
+    }
+};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
 class Gradient<TeamPolicyWChunkedScratchVTag, FieldView, Quadrature, JacobianMatrixType>
@@ -26,7 +30,10 @@ public:
         const size_t nteams =
             this->n_elements_ / chunk_size + (this->n_elements_ % chunk_size != 0 ? 1 : 0);
 
-        using ScratchSpaceType = Kokkos::View<T****, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+        using execution_space = typename Base::execution_space;
+
+        using ScratchSpaceType = Kokkos::View<T****, typename execution_space::scratch_memory_space,
+                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         const size_t scratch_size = ScratchSpaceType::shmem_size(
             chunk_size, this->ngll_, this->ngll_, this->ncomponents_);  // For storing field slices
         Kokkos::parallel_for(
@@ -45,10 +52,10 @@ public:
                 Kokkos::parallel_for(
                     Kokkos::TeamThreadRange(team, local_chunk_size * this->nz_ * this->nx_),
                     [&](const size_t idx) {
-                        const size_t local_e = idx / (this->nz_ * this->nx_);
-                        const size_t rem = idx % (this->nz_ * this->nx_);
-                        const size_t iz = rem / this->nx_;
-                        const size_t ix = rem % this->nx_;
+                        const size_t local_e = idx % local_chunk_size;
+                        const size_t rem = idx / local_chunk_size;
+                        const size_t iz = rem % this->nz_;
+                        const size_t ix = rem / this->nz_;
 
                         for (size_t c = 0; c < this->ncomponents_; ++c) {
                             field_scratch(local_e, iz, ix, c) =
@@ -60,10 +67,10 @@ public:
                 Kokkos::parallel_for(
                     Kokkos::TeamThreadRange(team, local_chunk_size * this->nz_ * this->nx_),
                     [&](const size_t idx) {
-                        const size_t local_e = idx / (this->nz_ * this->nx_);
-                        const size_t rem = idx % (this->nz_ * this->nx_);
-                        const size_t iz = rem / this->nx_;
-                        const size_t ix = rem % this->nx_;
+                        const size_t local_e = idx % local_chunk_size;
+                        const size_t rem = idx / local_chunk_size;
+                        const size_t iz = rem % this->nz_;
+                        const size_t ix = rem / this->nz_;
 
                         T du_dxi[this->ncomponents_] = {static_cast<T>(0)};
                         T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};

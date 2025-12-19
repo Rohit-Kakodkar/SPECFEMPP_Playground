@@ -4,7 +4,8 @@ cmake_minimum_required(VERSION 3.21)
 project(
   SFPP_Playground
   VERSION 0.1.0
-  DESCRIPTION "Playground for experimenting with SPECFEM++ computational kernels"
+  DESCRIPTION
+    "Playground for experimenting with SPECFEM++ computational kernels"
   LANGUAGES CXX)
 
 # ============================================================================
@@ -24,7 +25,7 @@ endif()
 # Options
 option(BUILD_TESTING "Build tests" ON)
 option(BUILD_EXAMPLES "Build example programs" ON)
-option(BUILD_BENCHMARKS "Build benchmark suite" OFF)
+option(BUILD_BENCHMARKS "Build benchmark suite" ON)
 option(ENABLE_UNITY_BUILD "Enable unity (jumbo) builds for faster compilation"
        OFF)
 option(BUILD_DOCS "Build documentation using Doxygen" OFF)
@@ -122,8 +123,9 @@ else()
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(
-      sfpp_playground_warnings INTERFACE -Wmisleading-indentation -Wduplicated-cond
-                                         -Wduplicated-branches -Wlogical-op)
+      sfpp_playground_warnings
+      INTERFACE -Wmisleading-indentation -Wduplicated-cond
+                -Wduplicated-branches -Wlogical-op)
   endif()
 endif()
 
@@ -147,17 +149,15 @@ endif()
 
 add_subdirectory(core)
 
-# # Future subdirectories can be added here:
-# if(BUILD_EXAMPLES)
-#   add_subdirectory(examples)
-# endif()
+# # Future subdirectories can be added here: if(BUILD_EXAMPLES)
+# add_subdirectory(examples) endif()
 
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(tests)
 endif()
 
-if(BUILD_BENCHMARK)
+if(BUILD_BENCHMARKS)
   add_subdirectory(benchmark)
 endif()
 
