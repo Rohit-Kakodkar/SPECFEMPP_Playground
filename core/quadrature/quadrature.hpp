@@ -15,14 +15,17 @@ public:
     }
     Quadrature() = default;
     using ViewType = Kokkos::View<float**, Layout, ExecutionSpace>;
+    using execution_space = ExecutionSpace;
+    using memory_space = typename ViewType::memory_space;
+    using layout = Layout;
 
     KOKKOS_INLINE_FUNCTION
-    float& xi(const int i, const int j) const {
+    float& xi(const size_t i, const size_t j) const {
         return xi_(i, j);
     }
 
     KOKKOS_INLINE_FUNCTION
-    float& gamma(const int i, const int j) const {
+    float& gamma(const size_t i, const size_t j) const {
         return gamma_(i, j);
     }
 

@@ -24,11 +24,11 @@ public:
     JacobianMatrixType J_;
     ReturnType gradient_;
 
-    constexpr static int ngll_ = 5;
-    constexpr static int ncomponents_ = 1;
-    int nx_;
-    int nz_;
-    int n_elements_;
+    constexpr static size_t ngll_ = 8;
+    constexpr static size_t ncomponents_ = 1;
+    size_t nx_;
+    size_t nz_;
+    size_t n_elements_;
 };
 }  // namespace impl
 
@@ -46,6 +46,7 @@ Gradient(const ParallelizationStrategy /*unused*/, const FieldView& field, const
 }  // namespace sfpp_playground
 
 #include "implementation/md_range.hpp"
+#include "implementation/range.hpp"
 #include "implementation/serial.hpp"
 #include "implementation/team_policy.hpp"
 #include "implementation/team_policy_w_chunked_scratch_view_tag.hpp"

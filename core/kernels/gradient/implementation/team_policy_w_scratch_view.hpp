@@ -33,6 +33,7 @@ public:
                                               Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
         const size_t scratch_size = ScratchSpaceType::shmem_size(
             this->ngll_, this->ngll_, this->ncomponents_);  // For storing the field slice
+
         Kokkos::parallel_for(
             "GradientComputationTeamPolicyWScratch",
             Kokkos::TeamPolicy<>(this->n_elements_, Kokkos::AUTO, Kokkos::AUTO)
@@ -82,6 +83,8 @@ public:
                         }
                     });
             });
+
+        Kokkos::fence();
 
         return this->gradient_;
     }

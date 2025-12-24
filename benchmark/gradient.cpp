@@ -5,64 +5,103 @@
 
 using namespace sfpp_playground;
 
-template <typename GradientType>
-void warmup(const GradientType& gradient) {
-    constexpr size_t n_warmup_iterations = 10;
-    for (size_t i = 0; i < n_warmup_iterations; ++i) {
-        auto grad = gradient();
-    }
-}
+template <typename ParallelizationStrategy, typename WavefieldInitializer,
+          typename QuadratureInitializer, typename JacobianInitializer, typename Layout,
+          typename ExecSpace>
+class GradientDriver {
+public:
+    using FieldType = Wavefield<WavefieldInitializer, Layout, ExecSpace>;
+    using QuadratureType = Quadrature<QuadratureInitializer, Layout, ExecSpace>;
+    using JacobianType = JacobianMatrix2D<JacobianInitializer, Layout, ExecSpace>;
+    using GradientType = Gradient<ParallelizationStrategy, FieldType, QuadratureType, JacobianType>;
 
-template <typename GradientType>
-void benchmark(const GradientType& gradient) {
-    auto start = std::chrono::high_resolution_clock::now();
-    auto grad = gradient();
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Strategy: " << std::setw(30) << std::left << GradientType::name()
-              << " | Time: " << std::fixed << std::setprecision(6) << elapsed.count() << " seconds"
-              << std::endl;
-}
+    GradientDriver(const size_t n_elements, const size_t ngll, const size_t ncomponents)
+        : field_(WavefieldInitializer{n_elements, ngll, ngll, ncomponents}),
+          lprime_(QuadratureInitializer{ngll}), J_(JacobianInitializer{n_elements, ngll, ngll}),
+          gradient_(ParallelizationStrategy{}, field_, lprime_, J_) {
+    }
+
+    void warmup() {
+        size_t n_warmup = 100;
+        for (size_t i = 0; i < n_warmup; ++i) {
+            gradient_();
+        }
+    }
+
+    void benchmark() {
+        warmup();
+        auto start = std::chrono::high_resolution_clock::now();
+        auto grad = gradient_();
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "Strategy: " << std::setw(30) << std::left << GradientType::name()
+                  << " | Time: " << std::fixed << std::setprecision(6) << elapsed.count()
+                  << " seconds" << std::endl;
+    }
+
+private:
+    FieldType field_;
+    QuadratureType lprime_;
+    JacobianType J_;
+    GradientType gradient_;
+};
 
 int main(int argc, char** argv) {
     Kokkos::initialize(argc, argv);
     {
         using namespace sfpp_playground;
 
-        constexpr int n_elements = 1 << 15;
-        constexpr int ngll = 5;
-        constexpr int ncomponents = 1;
+        constexpr size_t n_elements = 1 << 15;
+        constexpr size_t ngll = 8;
+        constexpr size_t ncomponents = 1;
 
-        // Initialize wavefield
-        Wavefield<WavefieldZeroInitializer2D> field{
-            WavefieldZeroInitializer2D{n_elements, ngll, ngll, ncomponents}};
+        using layout_left = Kokkos::LayoutLeft;
+        using layout_right = Kokkos::LayoutRight;
 
-        // Initialize quadrature
-        Quadrature<QuadratureIdentityInitializer> lprime{QuadratureIdentityInitializer{ngll}};
+        // Range
+        {
+            GradientDriver<RangeTag, WavefieldZeroInitializer2D, QuadratureIdentityInitializer,
+                           JacobianMatrixRegularInitializer2D, layout_left,
+                           Kokkos::DefaultExecutionSpace>
+                driver(n_elements, ngll, ncomponents);
+            driver.benchmark();
+        }
 
-        // Initialize Jacobian matrix
-        JacobianMatrix2D<JacobianMatrixRegularInitializer2D> J{
-            JacobianMatrixRegularInitializer2D{n_elements, ngll, ngll}};
+        // MDRange
+        {
+            GradientDriver<MDRangeTag, WavefieldZeroInitializer2D, QuadratureIdentityInitializer,
+                           JacobianMatrixRegularInitializer2D, layout_left,
+                           Kokkos::DefaultExecutionSpace>
+                driver(n_elements, ngll, ncomponents);
+            driver.benchmark();
+        }
 
-        const auto serial = Gradient(SerialTag{}, field, lprime, J);
-        const auto md_range = Gradient(MDRangeTag{}, field, lprime, J);
-        const auto team_policy = Gradient(TeamPolicyTag{}, field, lprime, J);
-        const auto team_policy_scratch = Gradient(TeamPolicyWScratchVTag{}, field, lprime, J);
-        const auto team_policy_chunked_scratch =
-            Gradient(TeamPolicyWChunkedScratchVTag{}, field, lprime, J);
+        // TeamPolicy
+        {
+            GradientDriver<TeamPolicyTag, WavefieldZeroInitializer2D, QuadratureIdentityInitializer,
+                           JacobianMatrixRegularInitializer2D, layout_left,
+                           Kokkos::DefaultExecutionSpace>
+                driver(n_elements, ngll, ncomponents);
+            driver.benchmark();
+        }
 
-        // Compute gradient using different strategies
-        warmup(serial);
-        warmup(md_range);
-        warmup(team_policy);
-        warmup(team_policy_scratch);
-        warmup(team_policy_chunked_scratch);
-        // Benchmarking code can be added here
-        benchmark(serial);
-        benchmark(md_range);
-        benchmark(team_policy);
-        benchmark(team_policy_scratch);
-        benchmark(team_policy_chunked_scratch);
+        // TeamPolicy with Scratch View
+        {
+            GradientDriver<TeamPolicyWScratchVTag, WavefieldZeroInitializer2D,
+                           QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D,
+                           layout_left, Kokkos::DefaultExecutionSpace>
+                driver(n_elements, ngll, ncomponents);
+            driver.benchmark();
+        }
+
+        // TeamPolicy with Chunked Scratch View
+        {
+            GradientDriver<TeamPolicyWChunkedScratchVTag, WavefieldZeroInitializer2D,
+                           QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D,
+                           layout_left, Kokkos::DefaultExecutionSpace>
+                driver(n_elements, ngll, ncomponents);
+            driver.benchmark();
+        }
     }
     Kokkos::finalize();
     return 0;

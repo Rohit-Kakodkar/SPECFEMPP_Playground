@@ -1,0 +1,95 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "release",
+            "displayName": "Release with Native Architecture",
+            "description": "Release build with Kokkos native architecture optimizations and aggressive vectorization",
+            "binaryDir": "build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "Kokkos_ARCH_NATIVE": "ON",
+                "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug with Native Architecture",
+            "description": "Debug build with Kokkos native architecture optimizations",
+            "binaryDir": "build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "Kokkos_ARCH_NATIVE": "OFF",
+                "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF"
+            }
+        },
+        {
+            "name" : "release-ampere80",
+            "displayName": "Release for NVIDIA Ampere (sm_80)",
+            "description": "Release build targeting NVIDIA Ampere architecture (sm_80)",
+            "binaryDir": "build/release-ampere80",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "Kokkos_ARCH_AMPERE80": "ON",
+                "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+                "Kokkos_ENABLE_CUDA": "ON"
+            }
+        },
+        {
+            "name" : "debug-ampere80",
+            "displayName": "Debug for NVIDIA Ampere (sm_80)",
+            "description": "Debug build targeting NVIDIA Ampere architecture (sm_80)",
+            "binaryDir": "build/debug-ampere80",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "Kokkos_ARCH_AMPERE80": "ON",
+                "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+                "Kokkos_ENABLE_CUDA": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "release",
+            "displayName": "Build Release Native",
+            "configurePreset": "release"
+        },
+        {
+            "name": "debug",
+            "displayName": "Build Debug Native",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release-ampere80",
+            "displayName": "Build Release for NVIDIA Ampere (sm_80)",
+            "configurePreset": "release-ampere80"
+        },
+        {
+            "name": "debug-ampere80",
+            "displayName": "Build Debug for NVIDIA Ampere (sm_80)",
+            "configurePreset": "debug-ampere80"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "release",
+            "displayName": "Test Release Native",
+            "configurePreset": "release"
+        },
+        {
+            "name": "debug",
+            "displayName": "Test Debug Native",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release-ampere80",
+            "displayName": "Test Release for NVIDIA Ampere (sm_80)",
+            "configurePreset": "release-ampere80"
+        },
+        {
+            "name": "debug-ampere80",
+            "displayName": "Test Debug for NVIDIA Ampere (sm_80)",
+            "configurePreset": "debug-ampere80"
+        }
+    ]
+}

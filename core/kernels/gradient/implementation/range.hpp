@@ -3,35 +3,40 @@
 #include <Kokkos_Core.hpp>
 
 namespace sfpp_playground {
-struct MDRangeTag {};
+struct RangeTag {};
 
 template <typename FieldView, typename Quadrature, typename JacobianMatrixType>
-class Gradient<MDRangeTag, FieldView, Quadrature, JacobianMatrixType>
+class Gradient<RangeTag, FieldView, Quadrature, JacobianMatrixType>
     : private impl::GradientBase<FieldView, Quadrature, JacobianMatrixType> {
 public:
     using Base = impl::GradientBase<FieldView, Quadrature, JacobianMatrixType>;
     using typename Base::ReturnType;
     using typename Base::T;
 
-    Gradient(const MDRangeTag /*unused*/, const FieldView& field, const Quadrature& lprime,
+    Gradient(const RangeTag /*unused*/, const FieldView& field, const Quadrature& lprime,
              const JacobianMatrixType& J)
         : Base(field, lprime, J) {
     }
 
     static std::string name() {
-        return "MDRangeTag";
+        return "RangeTag";
     }
 
     using Base::Base;
 
     ReturnType operator()() const {
-        // MD range policy implementation
+        // Range policy implementation - flatten 3D iteration space
+
+        const size_t total_iterations = this->n_elements_ * this->nz_ * this->nx_;
 
         Kokkos::parallel_for(
-            "GradientComputation",
-            Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0, 0, 0},
-                                                   {this->n_elements_, this->nz_, this->nx_}),
-            KOKKOS_CLASS_LAMBDA(const size_t e, const size_t iz, const size_t ix) {
+            "GradientComputation", Kokkos::RangePolicy<>(0, total_iterations),
+            KOKKOS_CLASS_LAMBDA(const size_t idx) {
+                // Decompose flat index into (e, iz, ix)
+                const size_t e = idx % this->n_elements_;
+                const size_t iz = (idx / this->n_elements_) % this->nz_;
+                const size_t ix = idx / (this->n_elements_ * this->nz_);
+
                 T du_dxi[this->ncomponents_] = {static_cast<T>(0)};
                 T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};
                 for (size_t k = 0; k < this->ngll_; ++k) {
