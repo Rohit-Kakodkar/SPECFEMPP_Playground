@@ -14,10 +14,14 @@ public:
         Kokkos::fence();
     }
     Quadrature() = default;
+    using initializer_type = Initializer;
     using ViewType = Kokkos::View<float**, Layout, ExecutionSpace>;
     using execution_space = ExecutionSpace;
     using memory_space = typename ViewType::memory_space;
     using layout = Layout;
+
+    Quadrature(const ViewType& xi, const ViewType& gamma) : xi_(xi), gamma_(gamma) {
+    }
 
     KOKKOS_INLINE_FUNCTION
     auto xi() const {
@@ -37,6 +41,16 @@ public:
     KOKKOS_INLINE_FUNCTION
     float& gamma(const size_t i, const size_t j) const {
         return gamma_(i, j);
+    }
+
+    template <typename E>
+    Quadrature<initializer_type, layout, E> create_mirror_view_and_copy(const E exec_space) const {
+        using MirrorType = Quadrature<initializer_type, layout, E>;
+        const auto xi_mirror =
+            Kokkos::create_mirror_view_and_copy(exec_space, static_cast<ViewType>(xi_));
+        const auto gamma_mirror =
+            Kokkos::create_mirror_view_and_copy(exec_space, static_cast<ViewType>(gamma_));
+        return MirrorType(xi_mirror, gamma_mirror);
     }
 
 private:

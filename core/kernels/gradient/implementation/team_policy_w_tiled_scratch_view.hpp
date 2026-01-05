@@ -43,7 +43,8 @@ public:
 
         Kokkos::parallel_for(
             "GradientComputationTeamPolicyWTiledScratch",
-            Kokkos::TeamPolicy<>(nteams, 256, 1).set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+            Kokkos::TeamPolicy<>(nteams, Kokkos::AUTO, Kokkos::AUTO)
+                .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
             KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& team) {
                 const size_t team_id = team.league_rank();
                 const size_t start_e = team_id * tile_size[0];

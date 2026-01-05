@@ -1,3 +1,5 @@
+#include "KokkosEnvironment.hpp"
+
 #include <gtest/gtest.h>
 
 #include <Kokkos_Core.hpp>
@@ -7,11 +9,12 @@
 using namespace sfpp_playground;
 
 #define SFPP_GRADIENT_TYPES(WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT)                        \
-    std::tuple<SerialTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                         \
+    std::tuple<RangeTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                          \
         std::tuple<MDRangeTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                    \
         std::tuple<TeamPolicyTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                 \
         std::tuple<TeamPolicyWScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,        \
-        std::tuple<TeamPolicyWChunkedScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
+        std::tuple<TeamPolicyWChunkedScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>, \
+        std::tuple<TeamPolicyWTiledScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
 
 // Test fixture for gradient operator tests
 template <typename TestingTypes>
@@ -21,20 +24,31 @@ protected:
     using WavefieldInitializer = std::tuple_element_t<1, TestingTypes>;
     using QuadratureInitializer = std::tuple_element_t<2, TestingTypes>;
     using JacobianInitializer = std::tuple_element_t<3, TestingTypes>;
+    using Layout = Kokkos::LayoutRight;  // Fixed layout for tests
+    using ExecSpace = Kokkos::DefaultExecutionSpace;
+
+    using WavefieldType = Wavefield<WavefieldInitializer, Layout, ExecSpace>;
+    using QuadratureType = Quadrature<QuadratureInitializer, Layout, ExecSpace>;
+    using JacobianType = JacobianMatrix2D<JacobianInitializer, Layout, ExecSpace>;
+    using GradientType =
+        Gradient<ParallelizationStrategy, WavefieldType, QuadratureType, JacobianType>;
+
     GradientTest()
-        : field_(WavefieldZeroInitializer2D{8, 8, 8, 1}), lprime_(QuadratureIdentityInitializer{8}),
-          J_(JacobianMatrixRegularInitializer2D{8, 8, 8}),
-          reference_gradient_(Gradient(SerialTag{}, field_, lprime_, J_)()) {
+        : field_(WavefieldInitializer{8, 8, 8, 1}), lprime_(QuadratureInitializer{8}),
+          J_(JacobianInitializer{8, 8, 8}) {
+        // Allocate reference gradient
+        const auto gradient = Gradient(SerialTag{}, field_, lprime_, J_)();
+        reference_gradient_ = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, gradient);
     }
 
     void SetUp() override {
         // Compute reference gradient using serial implementation
     }
 
-    Wavefield<WavefieldZeroInitializer2D> field_;
-    Quadrature<QuadratureIdentityInitializer> lprime_;
-    JacobianMatrix2D<JacobianMatrixRegularInitializer2D> J_;
-    Kokkos::View<float*****, Kokkos::HostSpace> reference_gradient_;
+    WavefieldType field_;
+    QuadratureType lprime_;
+    JacobianType J_;
+    Kokkos::View<float*****, Layout, Kokkos::DefaultHostExecutionSpace> reference_gradient_;
 };
 
 // Define the types for typed tests
@@ -63,6 +77,9 @@ TYPED_TEST(GradientTest, CompareAgainstSerial) {
     ASSERT_EQ(test_gradient.extent(4), this->reference_gradient_.extent(4))
         << "gradient dims mismatch";
 
+    const auto test_gradient_host =
+        Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, test_gradient);
+
     // Compare values with tolerance
     const float tolerance = 1e-5f;  // Slightly relaxed tolerance for floating point
     const auto n_elements = test_gradient.extent(0);
@@ -78,7 +95,7 @@ TYPED_TEST(GradientTest, CompareAgainstSerial) {
             for (size_t ix = 0; ix < nx; ++ix) {
                 for (size_t c = 0; c < ncomponents; ++c) {
                     for (size_t d = 0; d < 2; ++d) {
-                        const float test_val = test_gradient(e, iz, ix, c, d);
+                        const float test_val = test_gradient_host(e, iz, ix, c, d);
                         const float ref_val = this->reference_gradient_(e, iz, ix, c, d);
                         const float diff = std::abs(test_val - ref_val);
 
@@ -104,12 +121,9 @@ TYPED_TEST(GradientTest, CompareAgainstSerial) {
 // Main function to initialize Kokkos and run tests
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
-
-    Kokkos::initialize(argc, argv);
+    ::testing::AddGlobalTestEnvironment(new KokkosEnvironment());
 
     int result = RUN_ALL_TESTS();
-
-    Kokkos::finalize();
 
     return result;
 }
