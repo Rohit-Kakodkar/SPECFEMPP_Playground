@@ -20,6 +20,16 @@ public:
     using layout = Layout;
 
     KOKKOS_INLINE_FUNCTION
+    auto xi() const {
+        return xi_;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    auto gamma() const {
+        return gamma_;
+    }
+
+    KOKKOS_INLINE_FUNCTION
     float& xi(const size_t i, const size_t j) const {
         return xi_(i, j);
     }

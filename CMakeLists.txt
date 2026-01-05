@@ -152,7 +152,10 @@ add_subdirectory(core)
 # # Future subdirectories can be added here: if(BUILD_EXAMPLES)
 # add_subdirectory(examples) endif()
 
-# if(BUILD_TESTING) enable_testing() add_subdirectory(tests) endif()
+if(BUILD_TESTING)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
 
 if(BUILD_BENCHMARKS)
   add_subdirectory(benchmark)

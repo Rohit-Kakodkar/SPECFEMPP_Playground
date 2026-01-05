@@ -23,4 +23,6 @@ public:
 
 }  // namespace sfpp_playground
 
+#include "initializer/random.hpp"
+#include "initializer/uniform.hpp"
 #include "initializer/zero.hpp"

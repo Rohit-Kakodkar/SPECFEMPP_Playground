@@ -6,6 +6,13 @@
 
 using namespace sfpp_playground;
 
+#define SFPP_GRADIENT_TYPES(WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT)                        \
+    std::tuple<SerialTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                         \
+        std::tuple<MDRangeTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                    \
+        std::tuple<TeamPolicyTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                 \
+        std::tuple<TeamPolicyWScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,        \
+        std::tuple<TeamPolicyWChunkedScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
+
 // Test fixture for gradient operator tests
 template <typename TestingTypes>
 class GradientTest : public ::testing::Test {
@@ -15,8 +22,8 @@ protected:
     using QuadratureInitializer = std::tuple_element_t<2, TestingTypes>;
     using JacobianInitializer = std::tuple_element_t<3, TestingTypes>;
     GradientTest()
-        : field_(WavefieldZeroInitializer2D{8, 5, 5, 1}), lprime_(QuadratureIdentityInitializer{5}),
-          J_(JacobianMatrixRegularInitializer2D{8, 5, 5}),
+        : field_(WavefieldZeroInitializer2D{8, 8, 8, 1}), lprime_(QuadratureIdentityInitializer{8}),
+          J_(JacobianMatrixRegularInitializer2D{8, 8, 8}),
           reference_gradient_(Gradient(SerialTag{}, field_, lprime_, J_)()) {
     }
 
@@ -31,15 +38,13 @@ protected:
 };
 
 // Define the types for typed tests
-using GradientTypes =
-    ::testing::Types<std::tuple<MDRangeTag, WavefieldZeroInitializer2D,
-                                QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D>,
-                     std::tuple<TeamPolicyTag, WavefieldZeroInitializer2D,
-                                QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D>,
-                     std::tuple<TeamPolicyWScratchVTag, WavefieldZeroInitializer2D,
-                                QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D>,
-                     std::tuple<TeamPolicyWChunkedScratchVTag, WavefieldZeroInitializer2D,
-                                QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D>>;
+using GradientTypes = ::testing::Types<
+    SFPP_GRADIENT_TYPES(WavefieldZeroInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D),
+    SFPP_GRADIENT_TYPES(WavefieldRandomInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D),
+    SFPP_GRADIENT_TYPES(WavefieldUniformInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D)>;
 
 TYPED_TEST_SUITE(GradientTest, GradientTypes);
 

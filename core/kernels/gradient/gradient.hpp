@@ -51,3 +51,4 @@ Gradient(const ParallelizationStrategy /*unused*/, const FieldView& field, const
 #include "implementation/team_policy.hpp"
 #include "implementation/team_policy_w_chunked_scratch_view_tag.hpp"
 #include "implementation/team_policy_w_scratch_view.hpp"
+#include "implementation/team_policy_w_tiled_scratch_view.hpp"
