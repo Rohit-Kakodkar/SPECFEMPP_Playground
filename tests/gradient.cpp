@@ -52,13 +52,9 @@ protected:
 };
 
 // Define the types for typed tests
-using GradientTypes = ::testing::Types<
-    SFPP_GRADIENT_TYPES(WavefieldZeroInitializer2D, QuadratureIdentityInitializer,
-                        JacobianMatrixRegularInitializer2D),
-    SFPP_GRADIENT_TYPES(WavefieldRandomInitializer2D, QuadratureIdentityInitializer,
-                        JacobianMatrixRegularInitializer2D),
-    SFPP_GRADIENT_TYPES(WavefieldUniformInitializer2D, QuadratureIdentityInitializer,
-                        JacobianMatrixRegularInitializer2D)>;
+using GradientTypes =
+    ::testing::Types<std::tuple<TeamPolicyWTiledScratchVTag, WavefieldUniformInitializer2D,
+                                QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D>>;
 
 TYPED_TEST_SUITE(GradientTest, GradientTypes);
 

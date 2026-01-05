@@ -40,7 +40,7 @@ public:
                     T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};
                     for (size_t k = 0; k < this->ngll_; ++k) {
                         for (size_t c = 0; c < this->ncomponents_; ++c) {
-                            du_dxi[c] += lprime_host.xi(iz, k) * field_host(e, k, ix, c);
+                            du_dxi[c] += lprime_host.xi(ix, k) * field_host(e, iz, k, c);
                         }
                     }
                     for (size_t k = 0; k < this->ngll_; ++k) {
