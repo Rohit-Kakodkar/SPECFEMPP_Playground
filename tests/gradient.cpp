@@ -14,7 +14,8 @@ using namespace sfpp_playground;
         std::tuple<TeamPolicyTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,                 \
         std::tuple<TeamPolicyWScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,        \
         std::tuple<TeamPolicyWChunkedScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>, \
-        std::tuple<TeamPolicyWTiledScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
+        std::tuple<TeamPolicyWTiledScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,   \
+        std::tuple<CuteImplementationTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
 
 // Test fixture for gradient operator tests
 template <typename TestingTypes>
@@ -34,8 +35,8 @@ protected:
         Gradient<ParallelizationStrategy, WavefieldType, QuadratureType, JacobianType>;
 
     GradientTest()
-        : field_(WavefieldInitializer{8, 8, 8, 1}), lprime_(QuadratureInitializer{8}),
-          J_(JacobianInitializer{8, 8, 8}) {
+        : field_(WavefieldInitializer{32, 8, 8, 1}), lprime_(QuadratureInitializer{8}),
+          J_(JacobianInitializer{32, 8, 8}) {
         // Allocate reference gradient
         const auto gradient = Gradient(SerialTag{}, field_, lprime_, J_)();
         reference_gradient_ = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, gradient);
@@ -52,9 +53,13 @@ protected:
 };
 
 // Define the types for typed tests
-using GradientTypes =
-    ::testing::Types<std::tuple<TeamPolicyWTiledScratchVTag, WavefieldUniformInitializer2D,
-                                QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D>>;
+using GradientTypes = ::testing::Types<
+    SFPP_GRADIENT_TYPES(WavefieldZeroInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D),
+    SFPP_GRADIENT_TYPES(WavefieldRandomInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D),
+    SFPP_GRADIENT_TYPES(WavefieldUniformInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D)>;
 
 TYPED_TEST_SUITE(GradientTest, GradientTypes);
 
@@ -84,7 +89,7 @@ TYPED_TEST(GradientTest, CompareAgainstSerial) {
     const auto ncomponents = test_gradient.extent(3);
 
     size_t error_count = 0;
-    const size_t max_errors_to_show = 5;
+    const size_t max_errors_to_show = 4000;
 
     for (size_t e = 0; e < n_elements; ++e) {
         for (size_t iz = 0; iz < nz; ++iz) {

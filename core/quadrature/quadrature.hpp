@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
+#include <cute/tensor.hpp>
 
 namespace sfpp_playground {
 
@@ -52,6 +53,22 @@ public:
             Kokkos::create_mirror_view_and_copy(exec_space, static_cast<ViewType>(gamma_));
         return MirrorType(xi_mirror, gamma_mirror);
     }
+
+    template <int NGLL>
+    auto cute_tensor() const {
+        const auto shape = [&]() {
+            const auto dim0 = cute::Int<NGLL>{};
+            const auto dim1 = cute::Int<NGLL>{};
+            return cute::make_shape(dim0, dim1);
+        }();
+        const auto stride = [&]() {
+            const auto stride0 = xi_.stride_0();
+            const auto stride1 = xi_.stride_1();
+            return cute::make_shape(stride0, stride1);
+        }();
+        return std::make_pair(cute::make_tensor(xi_.data(), cute::make_layout(shape, stride)),
+                              cute::make_tensor(gamma_.data(), cute::make_layout(shape, stride)));
+    };
 
 private:
     ViewType xi_;

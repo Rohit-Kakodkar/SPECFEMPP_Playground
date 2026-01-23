@@ -23,7 +23,7 @@ public:
             Kokkos::MDRangePolicy<Kokkos::Rank<4>, HostSpace>({0, 0, 0, 0},
                                                               {nelements_, nz_, nx_, ncomponents_}),
             [=, *this](const size_t e, const size_t iz, const size_t ix, const size_t ic) {
-                host_view(e, iz, ix, ic) = std::rand();
+                host_view(e, iz, ix, ic) = static_cast<float>(std::rand()) / RAND_MAX;
             });
 
         Kokkos::fence();

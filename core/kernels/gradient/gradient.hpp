@@ -11,6 +11,8 @@ public:
         : field_(field), lprime_(lprime), J_(J),
           gradient_("gradient", field.extent(0), field.extent(1), field.extent(2), 1, 2),
           nx_(field.extent(2)), nz_(field.extent(1)), n_elements_(field.extent(0)) {
+        // Initialize gradient to zero
+        Kokkos::deep_copy(gradient_, static_cast<T>(0));
     }
 
     using memory_space = FieldView::memory_space;
@@ -45,6 +47,7 @@ Gradient(const ParallelizationStrategy /*unused*/, const FieldView& field, const
 
 }  // namespace sfpp_playground
 
+#include "implementation/cute_implementation.hpp"
 #include "implementation/md_range.hpp"
 #include "implementation/range.hpp"
 #include "implementation/serial.hpp"

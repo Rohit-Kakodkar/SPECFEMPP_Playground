@@ -111,6 +111,15 @@ int main(int argc, char** argv) {
                 driver(n_elements, ngll, ncomponents);
             driver.benchmark();
         }
+
+        // CUTE-based Implementation
+        {
+            GradientDriver<CuteImplementationTag, WavefieldZeroInitializer2D,
+                           QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D,
+                           layout_left, Kokkos::DefaultExecutionSpace>
+                driver(n_elements, ngll, ncomponents);
+            driver.benchmark();
+        }
     }
     Kokkos::finalize();
     return 0;

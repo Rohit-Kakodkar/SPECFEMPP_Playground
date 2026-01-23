@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
+#include <cute/tensor.hpp>
 
 namespace sfpp_playground {
 
@@ -32,6 +33,25 @@ public:
 
         return MirrorType(view_mirror);
     }
+
+    template <int NGLL, int NCOMP>
+    auto cute_tensor() const {
+        const auto shape = [&]() {
+            const auto dim0 = this->extent(0);
+            const auto dim1 = cute::Int<NGLL>{};
+            const auto dim2 = cute::Int<NGLL>{};
+            const auto dim3 = cute::Int<NCOMP>{};
+            return cute::make_shape(dim0, dim1, dim2, dim3);
+        }();
+        const auto stride = [&]() {
+            const auto stride0 = this->stride_0();
+            const auto stride1 = this->stride_1();
+            const auto stride2 = this->stride_2();
+            const auto stride3 = this->stride_3();
+            return cute::make_shape(stride0, stride1, stride2, stride3);
+        }();
+        return cute::make_tensor(this->data(), cute::make_layout(shape, stride));
+    };
 };
 
 }  // namespace sfpp_playground
