@@ -12,15 +12,13 @@ namespace sfpp_playground {
 struct CuteImplementationTag {};
 
 template <int NCOMP, typename CtaTiler, typename FTensor, typename FxSmemLayout,
-          typename FzSmemLayout, typename FThreadLayout, typename QTensor, typename XiSmemLayout,
-          typename GammaSmemLayout, typename QThreadLayout, typename JTensor,
-          typename JThreadLayout, typename GTensor, typename GThreadLayout>
-__global__ void compute_gradient_cute_kernel(
-    const CtaTiler cta_tiler, const FTensor field, FxSmemLayout fx_smem_layout,
-    FzSmemLayout fz_smem_layout, FThreadLayout field_thread_layout, const QTensor xi,
-    const QTensor gamma, XiSmemLayout xi_smem_layout, GammaSmemLayout gamma_smem_layout,
-    QThreadLayout lprime_thread_layout, const JTensor J, JThreadLayout J_thread_layout,
-    GTensor gradient, GThreadLayout gradient_thread_layout) {
+          typename FzSmemLayout, typename QTensor, typename XiSmemLayout, typename GammaSmemLayout,
+          typename JTensor, typename GTensor>
+__global__ void
+compute_gradient_cute_kernel(const CtaTiler cta_tiler, const FTensor field,
+                             FxSmemLayout fx_smem_layout, FzSmemLayout fz_smem_layout,
+                             const QTensor xi, const QTensor gamma, XiSmemLayout xi_smem_layout,
+                             GammaSmemLayout gamma_smem_layout, const JTensor J, GTensor gradient) {
     auto cta_coord = make_coord(blockIdx.x, _, _, _);
 
     constexpr size_t bN = size<0>(cta_tiler);
@@ -207,30 +205,12 @@ public:
         auto Xi_smem_layout = make_layout(make_shape(Int<bNx>{}, Int<bNl>{}), LayoutLeft{});
         auto Gamma_smem_layout = make_layout(make_shape(Int<bNz>{}, Int<bNl>{}), LayoutLeft{});
 
-        constexpr size_t tNe = 1;
-        constexpr size_t tNz = 2;
-        constexpr size_t tNx = 2;
-
-        auto field_thread_layout =
-            make_layout(make_shape(Int<tNe>{}, Int<tNz>{}, Int<tNx>{}, Int<Base::ncomponents_>{}),
-                        LayoutLeft{});
-
-        auto lprime_thread_layout = make_layout(make_shape(Int<tNz>{}, Int<tNx>{}), LayoutLeft{});
-
-        auto J_thread_layout =
-            make_layout(make_shape(Int<tNe>{}, Int<tNz>{}, Int<tNx>{}, Int<4>{}), LayoutLeft{});
-
-        auto gradient_thread_layout = make_layout(
-            make_shape(Int<tNe>{}, Int<tNz>{}, Int<tNx>{}, Int<Base::ncomponents_>{}, Int<2>{}),
-            LayoutLeft{});
-
         dim3 grid((n_elements + bN - 1) / bN);
         dim3 block(bN, bNz, bNx);
 
         sfpp_playground::compute_gradient_cute_kernel<Base::ncomponents_>
-            <<<grid, block>>>(cta_tiler, f, fx_smem_layout, fz_smem_layout, field_thread_layout, xi,
-                              gamma, Xi_smem_layout, Gamma_smem_layout, lprime_thread_layout, j,
-                              J_thread_layout, g, gradient_thread_layout);
+            <<<grid, block>>>(cta_tiler, f, fx_smem_layout, fz_smem_layout, xi, gamma,
+                              Xi_smem_layout, Gamma_smem_layout, j, g);
 
         Kokkos::fence();
 
