@@ -36,6 +36,8 @@ public:
 
     template <int NGLL>
     auto cute_tensor() const {
+        static_assert(std::is_same_v<Layout, Kokkos::LayoutLeft>,
+                      "Currently only LayoutLeft is supported for cute_tensor");
         const auto shape = [&]() {
             const auto dim0 = this->extent(0);
             const auto dim1 = cute::Int<NGLL>{};
@@ -52,7 +54,8 @@ public:
             const auto stride4 = this->stride_4();
             return cute::make_shape(stride0, stride1, stride2, stride3, stride4);
         }();
-        return cute::make_tensor(this->data(), cute::make_layout(shape, stride));
+        return cute::make_tensor(cute::make_gmem_ptr(this->data()),
+                                 cute::make_layout(shape, stride));
     }
 };
 

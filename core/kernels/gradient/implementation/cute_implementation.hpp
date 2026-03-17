@@ -195,7 +195,8 @@ public:
         constexpr size_t bNz = 2;
         constexpr size_t bNl = 8;
 
-        const auto cta_tiler = make_shape(Int<bN>{}, Int<bNz>{}, Int<bNx>{}, Int<bNl>{});
+        const auto cta_tiler =
+            make_shape(Int<bN>{}, Int<bNz>{}, Int<bNx>{}, Int<bNl>{}, Int<Base::ncomponents_>{});
 
         auto fx_smem_layout = make_layout(
             make_shape(Int<bN>{}, Int<bNz>{}, Int<bNl>{}, Int<Base::ncomponents_>{}), LayoutLeft{});

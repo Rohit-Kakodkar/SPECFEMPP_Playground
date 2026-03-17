@@ -113,8 +113,17 @@ int main(int argc, char** argv) {
         }
 
         // CUTE-based Implementation
+        // {
+        //     GradientDriver<CuteImplementationTag, WavefieldZeroInitializer2D,
+        //                    QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D,
+        //                    layout_left, Kokkos::DefaultExecutionSpace>
+        //         driver(n_elements, ngll, ncomponents);
+        //     driver.benchmark();
+        // }
+
+        // CUTE-based Implementation with Tiled Copy and FMA
         {
-            GradientDriver<CuteImplementationTag, WavefieldZeroInitializer2D,
+            GradientDriver<CuteCopyFMATag, WavefieldZeroInitializer2D,
                            QuadratureIdentityInitializer, JacobianMatrixRegularInitializer2D,
                            layout_left, Kokkos::DefaultExecutionSpace>
                 driver(n_elements, ngll, ncomponents);

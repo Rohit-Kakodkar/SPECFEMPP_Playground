@@ -92,7 +92,7 @@ endif()
 include(${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake)
 
 set(CUTLASS_ROOT
-    "/home/TROMP/Modules/modulefiles-shared/cutlass"
+    "/home/TROMP/source/cutlass/source"
     CACHE PATH "Path to CUTLASS installation")
 
 include_directories(${CUTLASS_ROOT}/include)

@@ -162,7 +162,7 @@ public:
 
                                     for (size_t c = 0; c < this->ncomponents_; ++c) {
                                         this->gradient_(start_e + local_e, iz + tile_iz_start,
-                                                        ix + tile_ix_start, c, 0) +=
+                                                        ix + tile_ix_start, c, 0) =
                                             this->J_(start_e + local_e, iz + tile_iz_start,
                                                      ix + tile_ix_start, 0, 0) *
                                                 du_dxi[c] +
@@ -170,7 +170,7 @@ public:
                                                      ix + tile_ix_start, 0, 1) *
                                                 du_dgamma[c];
                                         this->gradient_(start_e + local_e, iz + tile_iz_start,
-                                                        ix + tile_ix_start, c, 1) +=
+                                                        ix + tile_ix_start, c, 1) =
                                             this->J_(start_e + local_e, iz + tile_iz_start,
                                                      ix + tile_ix_start, 1, 0) *
                                                 du_dxi[c] +

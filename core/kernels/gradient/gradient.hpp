@@ -47,7 +47,8 @@ Gradient(const ParallelizationStrategy /*unused*/, const FieldView& field, const
 
 }  // namespace sfpp_playground
 
-#include "implementation/cute_implementation.hpp"
+// #include "implementation/cute_implementation.hpp"
+#include "implementation/cute_w_tiled_copy_fma.hpp"
 #include "implementation/md_range.hpp"
 #include "implementation/range.hpp"
 #include "implementation/serial.hpp"

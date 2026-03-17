@@ -15,7 +15,7 @@ using namespace sfpp_playground;
         std::tuple<TeamPolicyWScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,        \
         std::tuple<TeamPolicyWChunkedScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>, \
         std::tuple<TeamPolicyWTiledScratchVTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>,   \
-        std::tuple<CuteImplementationTag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
+        std::tuple<CuteCopyFMATag, WAVEFIELD_INIT, QUADRATURE_INIT, JACOBIAN_INIT>
 
 // Test fixture for gradient operator tests
 template <typename TestingTypes>
@@ -25,7 +25,7 @@ protected:
     using WavefieldInitializer = std::tuple_element_t<1, TestingTypes>;
     using QuadratureInitializer = std::tuple_element_t<2, TestingTypes>;
     using JacobianInitializer = std::tuple_element_t<3, TestingTypes>;
-    using Layout = Kokkos::LayoutRight;  // Fixed layout for tests
+    using Layout = Kokkos::LayoutLeft;  // Fixed layout for tests
     using ExecSpace = Kokkos::DefaultExecutionSpace;
 
     using WavefieldType = Wavefield<WavefieldInitializer, Layout, ExecSpace>;
@@ -35,8 +35,8 @@ protected:
         Gradient<ParallelizationStrategy, WavefieldType, QuadratureType, JacobianType>;
 
     GradientTest()
-        : field_(WavefieldInitializer{32, 8, 8, 1}), lprime_(QuadratureInitializer{8}),
-          J_(JacobianInitializer{32, 8, 8}) {
+        : field_(WavefieldInitializer{64, 8, 8, 1}), lprime_(QuadratureInitializer{8}),
+          J_(JacobianInitializer{64, 8, 8}) {
         // Allocate reference gradient
         const auto gradient = Gradient(SerialTag{}, field_, lprime_, J_)();
         reference_gradient_ = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, gradient);
@@ -59,6 +59,8 @@ using GradientTypes = ::testing::Types<
     SFPP_GRADIENT_TYPES(WavefieldRandomInitializer2D, QuadratureIdentityInitializer,
                         JacobianMatrixRegularInitializer2D),
     SFPP_GRADIENT_TYPES(WavefieldUniformInitializer2D, QuadratureIdentityInitializer,
+                        JacobianMatrixRegularInitializer2D),
+    SFPP_GRADIENT_TYPES(WavefieldElementInitializer2D, QuadratureIdentityInitializer,
                         JacobianMatrixRegularInitializer2D)>;
 
 TYPED_TEST_SUITE(GradientTest, GradientTypes);

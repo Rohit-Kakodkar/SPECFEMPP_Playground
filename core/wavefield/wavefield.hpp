@@ -36,6 +36,8 @@ public:
 
     template <int NGLL, int NCOMP>
     auto cute_tensor() const {
+        static_assert(std::is_same_v<Layout, Kokkos::LayoutLeft>,
+                      "Currently only LayoutLeft is supported for cute_tensor");
         const auto shape = [&]() {
             const auto dim0 = this->extent(0);
             const auto dim1 = cute::Int<NGLL>{};
@@ -44,18 +46,20 @@ public:
             return cute::make_shape(dim0, dim1, dim2, dim3);
         }();
         const auto stride = [&]() {
-            const auto stride0 = this->stride_0();
+            const auto stride0 = cute::Int<1>{};
             const auto stride1 = this->stride_1();
             const auto stride2 = this->stride_2();
             const auto stride3 = this->stride_3();
             return cute::make_shape(stride0, stride1, stride2, stride3);
         }();
-        return cute::make_tensor(this->data(), cute::make_layout(shape, stride));
+        return cute::make_tensor(cute::make_gmem_ptr(this->data()),
+                                 cute::make_layout(shape, stride));
     };
 };
 
 }  // namespace sfpp_playground
 
+#include "initializer/element.hpp"
 #include "initializer/random.hpp"
 #include "initializer/uniform.hpp"
 #include "initializer/zero.hpp"
