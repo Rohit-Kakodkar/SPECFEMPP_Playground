@@ -275,8 +275,8 @@ public:
             this->gradient_.data(),
             make_layout(make_shape(n_elements, Int<Base::ngll_>{}, Int<Base::ngll_>{},
                                    Int<Base::ncomponents_>{}, Int<2>{}),
-                        make_shape(Int<1>{}, this->gradient_.stride_1(), this->gradient_.stride_2(),
-                                   this->gradient_.stride_3(), this->gradient_.stride_4())));
+                        make_shape(Int<1>{}, this->gradient_.stride(1), this->gradient_.stride(2),
+                                   this->gradient_.stride(3), this->gradient_.stride(4))));
 
         constexpr size_t bN = 4 * vec_length;
         constexpr size_t bNx = 4;

@@ -47,9 +47,9 @@ public:
         }();
         const auto stride = [&]() {
             const auto stride0 = cute::Int<1>{};
-            const auto stride1 = this->stride_1();
-            const auto stride2 = this->stride_2();
-            const auto stride3 = this->stride_3();
+            const auto stride1 = this->stride(1);
+            const auto stride2 = this->stride(2);
+            const auto stride3 = this->stride(3);
             return cute::make_shape(stride0, stride1, stride2, stride3);
         }();
         return cute::make_tensor(cute::make_gmem_ptr(this->data()),

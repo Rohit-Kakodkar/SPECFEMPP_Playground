@@ -31,7 +31,7 @@ if(CMAKE_VERSION VERSION_GREATER "3.30.0")
   endif()
 endif()
 
-set(KOKKOS_VERSION "4.7.01")
+set(KOKKOS_VERSION "5.0.1")
 
 # Set common FetchContent parameters
 set(KOKKOS_URL

@@ -65,7 +65,7 @@ public:
         }();
         const auto stride = [&]() {
             const auto stride0 = Int<1>{};
-            const auto stride1 = xi_.stride_1();
+            const auto stride1 = xi_.stride(1);
             return cute::make_shape(stride0, stride1);
         }();
         return std::make_pair(

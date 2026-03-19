@@ -29,8 +29,8 @@ public:
 
         Kokkos::parallel_for(
             "GradientComputation",
-            Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0, 0, 0},
-                                                   {this->n_elements_, this->nz_, this->nx_}),
+            Kokkos::MDRangePolicy<Kokkos::Rank<3, Kokkos::Iterate::Left>>(
+                {0, 0, 0}, {this->n_elements_, this->nz_, this->nx_}),
             KOKKOS_CLASS_LAMBDA(const size_t e, const size_t iz, const size_t ix) {
                 T du_dxi[this->ncomponents_] = {static_cast<T>(0)};
                 T du_dgamma[this->ncomponents_] = {static_cast<T>(0)};
