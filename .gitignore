@@ -2,3 +2,5 @@ build
 .vscode
 .venv
 output.log
+*.nsys-rep
+*.sqlite
